@@ -1,0 +1,142 @@
+#include <Servo.h>
+
+// Pin connections
+const int trigPin = 2;       // Trig pin of the ultrasonic sensor connected to digital pin 2
+const int echoPin = 3;       // Echo pin of the ultrasonic sensor connected to digital pin 3
+const int servoPin = 9;      // Signal pin of the servo motor connected to digital pin 9
+const int motor1Pin1 = 4;    // Motor 1 control pin 1 connected to digital pin 4
+const int motor1Pin2 = 5;    // Motor 1 control pin 2 connected to digital pin 5
+const int motor2Pin1 = 6;    // Motor 2 control pin 1 connected to digital pin 6
+const int motor2Pin2 = 7;    // Motor 2 control pin 2 connected to digital pin 7
+
+// Servo object
+Servo myservo;
+
+// Distance thresholds for maze navigation
+const float wallThreshold = 10.0;    // Threshold distance to consider a wall
+const float openThreshold = 20.0;    // Threshold distance to consider an open path
+
+void setup() {
+  Serial.begin(9600);   // Initialize serial communication
+  pinMode(trigPin, OUTPUT);   // Set trigPin as output
+  pinMode(echoPin, INPUT);    // Set echoPin as input
+  myservo.attach(servoPin);   // Attach the servo to the servoPin
+  myservo.write(90);          // Set the initial position of the servo to face forward
+  pinMode(motor1Pin1, OUTPUT);    // Set motor control pins as output
+  pinMode(motor1Pin2, OUTPUT);
+  pinMode(motor2Pin1, OUTPUT);
+  pinMode(motor2Pin2, OUTPUT);
+}
+
+void loop() {
+  // Gather data from the front
+  float frontDistance = getDistance();
+
+  // Rotate the servo to the right
+  rotateServo(45);
+  delay(500);  // Wait for the servo to rotate
+
+  // Gather data from the right side
+  float rightDistance = getDistance();
+
+  // Rotate the servo to the left
+  rotateServo(135);
+  delay(500);  // Wait for the servo to rotate
+
+  // Gather data from the left side
+  float leftDistance = getDistance();
+
+  // Rotate the servo back to face forward
+  rotateServo(90);
+  delay(500);  // Wait for the servo to rotate
+
+  // Print the distance readings
+  Serial.print("Front Distance: ");
+  Serial.print(frontDistance);
+  Serial.println(" cm");
+
+  Serial.print("Right Distance: ");
+  Serial.print(rightDistance);
+  Serial.println(" cm");
+
+  Serial.print("Left Distance: ");
+  Serial.print(leftDistance);
+  Serial.println(" cm");
+
+  // Maze-solving logic
+  if (frontDistance >= openThreshold) {
+    // Open path ahead, move forward
+    moveForward();
+  } else {
+    // Obstacle detected
+    if (rightDistance >= wallThreshold) {
+      // Right side is open, turn right
+      turnRight();
+    } else if (leftDistance >= wallThreshold) {
+      // Left side is open, turn left
+      turnLeft();
+    } else {
+      // Dead end, turn around
+      turnAround();
+    }
+  }
+
+  delay(1000);  // Wait for a short time before taking the next measurements
+}
+
+// Function to rotate the servo motor to a specified angle
+void rotateServo(int angle) {
+  myservo.write(angle);
+  delay(500);  // Adjust the delay according to your servo's response time
+}
+
+// Function to measure the distance using the ultrasonic sensor
+float getDistance() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  float duration = pulseIn(echoPin, HIGH);
+  float distance = duration * 0.034 / 2;
+
+  return distance;
+}
+
+// Function to move the robot forward
+void moveForward() {
+  digitalWrite(motor1Pin1, HIGH);
+  digitalWrite(motor1Pin2, LOW);
+  digitalWrite(motor2Pin1, HIGH);
+  digitalWrite(motor2Pin2, LOW);
+  // Adjust the motor control signals according to your specific motor configuration and motor driver
+}
+
+// Function to turn the robot left
+void turnLeft() {
+  digitalWrite(motor1Pin1, LOW);
+  digitalWrite(motor1Pin2, HIGH);
+  digitalWrite(motor2Pin1, HIGH);
+  digitalWrite(motor2Pin2, LOW);
+  // Adjust the motor control signals according to your specific motor configuration and motor driver
+}
+
+// Function to turn the robot right
+void turnRight() {
+  digitalWrite(motor1Pin1, HIGH);
+  digitalWrite(motor1Pin2, LOW);
+  digitalWrite(motor2Pin1, LOW);
+  digitalWrite(motor2Pin2, HIGH);
+  // Adjust the motor control signals according to your specific motor configuration and motor driver
+}
+
+// Function to make the robot turn around
+void turnAround() {
+  digitalWrite(motor1Pin1, LOW);
+  digitalWrite(motor1Pin2, HIGH);
+  digitalWrite(motor2Pin1, LOW);
+  digitalWrite(motor2Pin2, HIGH);
+  // Adjust the motor control signals according to your specific motor configuration and motor driver
+}
