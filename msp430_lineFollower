@@ -1,0 +1,57 @@
+#include <msp430.h>
+#include <inttypes.h>
+
+#define ML1 BIT0
+#define ML2 BIT1
+#define MR1 BIT2
+#define MR2 BIT3
+
+#define LS BIT0
+#define FS BIT1
+#define RS BIT2
+
+void main(void){
+    WDTCTL = WDTPW | WDTHOLD;
+    P2DIR &= ~(LS + FS + RS);
+    P1DIR |= (ML1 + ML2 + MR1 + MR2);
+    uint8_t mask = 0b00000111;
+    P2REN |= (LS + FS + RS);                    // Enable Resistor for SW pin
+    P2OUT |= (LS + FS + RS);
+
+    while(1){
+        uint8_t my_variable = P2IN;
+        uint8_t three_bits = my_variable & mask;
+
+        switch (three_bits) {
+           case (0b00000000):
+               P1OUT |= (MR1 + ML1);
+               P1OUT &= ~(MR2 + ML2);
+              break;
+           case (0b00000010):
+               P1OUT |= (MR1 + ML1);
+               P1OUT &= ~(MR2 + ML2);
+              break;
+           case (0b00000110):
+               P1OUT |= ML1;
+               P1OUT &= ~(MR1 + MR2 + ML2);
+              break;
+           case (0b00000011):
+               P1OUT |= MR1;
+               P1OUT &= ~(MR2 + ML2 + ML1);
+              break;
+           case (0b00000001):
+               P1OUT |= MR1;
+               P1OUT &= ~(ML1 + MR2 + ML2);
+              break;
+           case (0b00000100):
+               P1OUT |= ML1;
+               P1OUT &= ~(MR2 + ML2 + MR1);
+              break;
+           case (0b00000111):
+               P1OUT &= ~(MR1 + MR2 + ML1 + ML2);
+              break;
+           default:
+               P1OUT &= ~(MR1 + MR2 + ML1 + ML2);
+        }
+    }
+}
